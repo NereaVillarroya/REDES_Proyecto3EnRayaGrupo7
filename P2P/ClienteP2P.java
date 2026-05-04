@@ -42,22 +42,29 @@ public class ClienteP2P {
         System.out.println("------------ CONECTANDO ------------");
 
         // Intento de conexión P2P
-        try (Socket socketToOther = new Socket(otherIp, otherPort);
-             ServerSocket serverSocket = new ServerSocket(myPort);
-             Socket socketFromOther = serverSocket.accept()) {
+        try {
+            // --- 1. Iniciar ServerSocket en el Cliente 2 (para escuchar) ---
+            ServerSocket serverSocket = new ServerSocket(myPort);
+            System.out.println("Cliente 2 esperando conexión en el puerto " + myPort + "...");
+            Socket socketFromOther = serverSocket.accept(); // Espera la conexión
 
-            connected1 = true;
             connected2 = true;
+            System.out.println("Conexión recibida de " + socketFromOther.getRemoteSocketAddress());
 
-            // Enviar y recibir mensajes entre los dos clientes
+            // --- 2. Intento de Conexión Saliente desde Cliente 1 ---
+            Socket socketToOther = new Socket(otherIp, otherPort);
+            connected1 = true;
+            System.out.println("Conexión establecida con " + socketToOther.getRemoteSocketAddress());
+
+            // --- 3. Configuración de los flujos de entrada y salida para ambos clientes ---
             BufferedReader inFromOther = new BufferedReader(new InputStreamReader(socketFromOther.getInputStream()));
             PrintWriter outToOther = new PrintWriter(socketToOther.getOutputStream(), true);
 
-            // Intercambio de información para iniciar el juego
+            // --- 4. Lógica para iniciar el juego y alternar turnos ---
             if (myTurn) {
-                playGame(true, inFromOther, outToOther); // Comienza el cliente que se conecta primero
+                playGame(true, inFromOther, outToOther); // Empieza el cliente que se conecta primero
             } else {
-                playGame(false, inFromOther, outToOther); // El otro cliente comienza
+                playGame(false, inFromOther, outToOther); // El otro cliente empieza
             }
 
         } catch (IOException e) {
@@ -65,12 +72,12 @@ public class ClienteP2P {
         }
     }
 
-    // Función para jugar la partida
+    // --- Función para jugar la partida ---
     private static void playGame(boolean isMyTurn, BufferedReader inFromOther, PrintWriter outToOther) {
         Scanner sc = new Scanner(System.in);
         while (true) {
             if (isMyTurn) {
-                System.out.println("Es tu turno, introduce una fila y columna: ");
+                System.out.println("Es tu turno, introduce una fila y columna (0-2): ");
                 String guess = sc.nextLine();
                 outToOther.println("GUESS:" + guess); // Enviar mi jugada
             }
